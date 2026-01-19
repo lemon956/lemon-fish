@@ -2,9 +2,12 @@
 # 具体配置请放在 conf.d/ 目录下
 if status is-interactive
 # 交互式会话的命令可以放在这里
+# 交互式会话的命令可以放在这里
 end
 # fzf 配置
 if test -f ~/.fzf/shell/key-bindings.fish
+source ~/.fzf/shell/key-bindings.fish
+fzf_key_bindings
 source ~/.fzf/shell/key-bindings.fish
 fzf_key_bindings
 end

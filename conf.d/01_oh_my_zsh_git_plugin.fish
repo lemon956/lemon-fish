@@ -12,6 +12,14 @@ set -g git_version (git version 2>/dev/null | string split ' ' | tail -1)
 #
 
 # The name of the current branch
+function git_current_branch
+    if not git rev-parse --git-dir &>/dev/null
+        return 1
+    end
+    
+    git symbolic-ref --short HEAD 2>/dev/null
+end
+
 # Back-compatibility wrapper for when this function was defined here in
 # the plugin, before being pulled in to core lib/git.zsh as git_current_branch()
 function current_branch
