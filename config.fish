@@ -21,9 +21,3 @@ if test -f /home/lemon/.go-switch/environment/system.fish; source /home/lemon/.g
 if test -f "$HOME/.cargo/env.fish"
     source "$HOME/.cargo/env.fish"
 end
-
-if test "$TERM_PROGRAM" != "vscode"
-    if status is-interactive
-        tmux attach || tmux new
-    end
-end
