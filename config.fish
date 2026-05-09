@@ -13,11 +13,21 @@ fzf_key_bindings
 end
 # 配置opengl 问题，可以修复无法播放视频的问题
 set -gx GDK_GL gles
-
 # go-switch
 if test -f /home/lemon/.go-switch/environment/system.fish; source /home/lemon/.go-switch/environment/system.fish; end
-
 # cargo
 if test -f "$HOME/.cargo/env.fish"
-    source "$HOME/.cargo/env.fish"
+source "$HOME/.cargo/env.fish"
 end
+# bun
+set --export BUN_INSTALL "$HOME/.bun"
+set --export PATH $BUN_INSTALL/bin $PATH
+# linuxbrew
+if test -d /home/linuxbrew/.linuxbrew
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+else if test -d ~/.linuxbrew
+eval "$(~/.linuxbrew/bin/brew shellenv)"
+end
+# opencode
+fish_add_path /home/lemon/.opencode/bin
+fish_add_path ~/.npm-global/bin
