@@ -31,3 +31,6 @@ end
 # opencode
 fish_add_path /home/lemon/.opencode/bin
 fish_add_path ~/.npm-global/bin
+
+# claude code alias
+alias cc='env TZ=America/Los_Angeles claude'
