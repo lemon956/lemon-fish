@@ -1,3 +1,10 @@
+# Claude Code 相关别名与函数集中管理
+# 新增 cc-* 别名直接写在这里即可（conf.d 启动时整文件 source，文件名/函数名无需对应）
+
+# 带洛杉矶时区的 claude
+alias cc='env TZ=America/Los_Angeles claude'
+
+# 带 OTel 遥测的 claude → 本地 collector
 function cc-otel --description 'claude with OTel telemetry → local collector'
     argparse --ignore-unknown h/help no-proxy -- $argv
     or return
