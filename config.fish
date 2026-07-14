@@ -33,3 +33,6 @@ fish_add_path /home/lemon/.opencode/bin
 fish_add_path ~/.npm-global/bin
 
 # claude code 相关别名见 conf.d/10_claude.fish
+
+# 设置默认编辑器
+if type -q nvim; set -gx EDITOR nvim; end
