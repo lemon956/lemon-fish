@@ -453,24 +453,54 @@ Expected: 字符、行数和缩进与真彩画面完全相同；标题仍呈彩�
 Run from the repository root:
 
 ```bash
-timings=$(mktemp)
-script -qfec "env TERM=xterm-256color COLORTERM=truecolor fish --no-config --interactive --command 'source functions/fish_greeting.fish; for i in (seq 20); fish_greeting; echo \$CMD_DURATION >&3; end' 3>$timings" \
-  /dev/null >/dev/null
-sort -n "$timings" | awk '
+set -euo pipefail
+perf_tmp=$(mktemp -d)
+trap 'rm -rf "$perf_tmp"' EXIT
+capture="$perf_tmp/fish-time.pty"
+raw="$perf_tmp/time.raw"
+samples="$perf_tmp/time-ms.txt"
+
+script -qfec "env TERM=xterm-256color COLORTERM=truecolor fish --no-config --interactive --command 'source functions/fish_greeting.fish; for i in (seq 20); time fish_greeting; end'" \
+  /dev/null > "$capture"
+
+tr -d '\r' < "$capture" |
+  awk '$1 == "Executed" && $2 == "in" { print }' > "$raw"
+awk '
+  function milliseconds(value, unit) {
+    if (unit == "micros") return value / 1000
+    if (unit == "millis") return value
+    if (unit == "secs") return value * 1000
+    printf "unsupported Fish time unit: %s\n", unit > "/dev/stderr"
+    exit 2
+  }
+  { printf "%.6f\n", milliseconds($3, $4) }
+' "$raw" > "$samples"
+
+printf '%s\n' 'raw_samples:'
+nl -ba "$raw"
+printf '%s\n' 'normalized_samples_ms:'
+nl -ba "$samples"
+sort -n "$samples" | awk '
   NR == 1 { minimum = $1 }
   NR == 10 { lower = $1 }
   NR == 11 { upper = $1 }
   { maximum = $1 }
   END {
+    if (NR != 20) {
+      printf "samples=%d expected=20\n", NR > "/dev/stderr"
+      exit 1
+    }
     median = (lower + upper) / 2
-    printf "samples=%d median_ms=%.1f min_ms=%d max_ms=%d\n", NR, median, minimum, maximum
-    exit !(NR == 20 && median <= 50)
+    printf "samples=%d median_ms=%.3f min_ms=%.3f max_ms=%.3f\n", NR, median, minimum, maximum
+    exit !(median <= 50)
   }
 '
-rm "$timings"
+
+rm -rf "$perf_tmp"
+trap - EXIT
 ```
 
-Expected: `samples=20`; `median_ms` is at most `50.0`; command returns 0. On the inspected host, the validated prototype reported `median_ms=0.0`.
+Expected: `raw_samples` contains exactly 20 Fish `Executed in` lines with explicit `micros`, `millis`, or `secs` units; `normalized_samples_ms` contains exactly 20 millisecond values; the summary reports `samples=20` and `median_ms` at most `50.000`; command returns 0. On the inspected host, the corrected measurement reported `samples=20 median_ms=5.390 min_ms=5.320 max_ms=9.050`.
 
 - [ ] **Step 5: 确认最终仓库状态**
 
