@@ -3,13 +3,13 @@ set -euo pipefail
 
 readonly ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly FUNCTION_FILE="$ROOT_DIR/functions/fish_greeting.fish"
-readonly TRUECOLOR_SHA256="b95e5598fffcac61a4a10bbf185fe602068e4b7ed6e8de3caf0cb9308060a28e"
-readonly XTERM256_SHA256="3dcd1dec206d85cfc5855d74f16df3be3f4877528befcd469ebc5e50d111cf88"
-readonly PLAIN_SHA256="4827bd4b6fbdb09ea318d017d7c7c58ba786ef5faf48dfcd3de0943070e335c6"
+readonly TRUECOLOR_SHA256="2e244f260807929ff832145ed36d2262d670ca78b9940bf88c1d533e8b554b53"
+readonly XTERM256_SHA256="c3cc4c65c18c0e7e8a2a2f70566074ca66a7f412241badc3e9a8aba9cace68ca"
+readonly PLAIN_SHA256="727e5386d9a04a74376ee9d3fa57f849d80b823429bd9c3d5e1fc3c15942d975"
 readonly TITLE_TRUECOLOR_SHA256="ce4807ba3b2f2c0445cce339b5683df975b1eca12154ac230e94e30c774437b2"
 readonly TITLE_PLAIN_SHA256="758a85557c85abb981dffa7763223ed926e5d2faf6f8200d47112c28e15c2acd"
-readonly LEMON_TRUECOLOR_SHA256="a768dcc6b1a9ff91d053ff48c4e8eb1c97ed287bde924803512b7f1f7cf31247"
-readonly LEMON_PLAIN_SHA256="fc917acdb5302983b470eb4d8cd3e83e68e2c6f3da246b2ad3e89bc14d2c0ae2"
+readonly LEMON_TRUECOLOR_SHA256="548cda3b81ed28b0e309fb10c5040a317b645581cd3b86116b7dbe1bd817b989"
+readonly LEMON_PLAIN_SHA256="baa279ead94a62b694a474e64ee3b16457a4a6b3445ad3cd74a4b7c1393363b1"
 readonly FISH_COMMAND='source "$GREETING_FUNCTION"; fish_greeting'
 
 fail() {
@@ -120,8 +120,8 @@ cmp -s "$TMP_DIR/truecolor.txt" "$TMP_DIR/xterm256.txt" || fail "color modes cha
 
 head -n 6 "$TMP_DIR/truecolor.payload" > "$TMP_DIR/title.ansi"
 head -n 6 "$TMP_DIR/truecolor.txt" > "$TMP_DIR/title.txt"
-sed -n '8,31p' "$TMP_DIR/truecolor.payload" | cut -c 5- > "$TMP_DIR/lemon.ansi"
-sed -n '8,31p' "$TMP_DIR/truecolor.txt" | cut -c 5- > "$TMP_DIR/lemon.txt"
+sed -n '8,27p' "$TMP_DIR/truecolor.payload" | cut -c 5- > "$TMP_DIR/lemon.ansi"
+sed -n '8,27p' "$TMP_DIR/truecolor.txt" | cut -c 5- > "$TMP_DIR/lemon.txt"
 assert_hash "$TITLE_TRUECOLOR_SHA256" "$TMP_DIR/title.ansi" "title ANSI"
 assert_hash "$TITLE_PLAIN_SHA256" "$TMP_DIR/title.txt" "title plain text"
 assert_hash "$LEMON_TRUECOLOR_SHA256" "$TMP_DIR/lemon.ansi" "lemon ANSI"
@@ -130,9 +130,9 @@ assert_hash "$LEMON_PLAIN_SHA256" "$TMP_DIR/lemon.txt" "lemon plain text"
 awk '
     NR <= 6 && length($0) > 71 { exit 1 }
     NR == 7 && length($0) != 0 { exit 1 }
-    NR >= 8 && NR <= 31 && (length($0) != 68 || substr($0, 1, 4) != "    ") { exit 1 }
-    END { if (NR != 31) exit 1 }
-' "$TMP_DIR/truecolor.txt" || fail "plain-text layout is not 6 + 1 + 24 lines within 71 columns"
+    NR >= 8 && NR <= 27 && (length($0) != 68 || substr($0, 1, 4) != "    ") { exit 1 }
+    END { if (NR != 27) exit 1 }
+' "$TMP_DIR/truecolor.txt" || fail "plain-text layout is not 6 + 1 + 20 lines within 71 columns"
 
 if LC_ALL=C grep -n '[^ .=+#@-]' "$TMP_DIR/lemon.txt"; then
     fail "lemon contains a character outside space and .-=+#@"

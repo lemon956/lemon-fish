@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 新增一个 Fish 原生 `fish_greeting`，在安全的交互式 TTY 中打印已批准的 Doom 右倾彩虹标题和 64×24 真彩柠檬，并提供字符布局不变的 xterm-256 降级。
+**Goal:** 将 Fish 原生 `fish_greeting` 更新为在安全的交互式 TTY 中打印已批准的 Doom 右倾彩虹标题和 64×20 真彩柠檬，并提供字符布局不变的 xterm-256 降级。
 
 **Architecture:** 运行时只有 `functions/fish_greeting.fish`：先执行交互式、TTY 和 `TERM=dumb` 守卫，再从两个静态 ANSI 负载中选择真彩或 256 色版本，最后追加不换行的安全重置。批准的真彩负载在开发阶段由临时生成器编码进 Fish 源文件；生成器同时确定性地产生 xterm-256 负载，启动时不读取图片、不转换字符画，也不启动外部进程。
 
@@ -11,34 +11,34 @@
 ## Global Constraints
 
 - 规格来源：`docs/superpowers/specs/2026-07-14-oh-lemon-fish-greeting-design.md`。
-- 唯一运行时新增文件是 `functions/fish_greeting.fish`；不得修改 `config.fish`、`conf.d/`、提示符或通用颜色变量。
-- 真彩批准负载必须来自 `/tmp/oh-lemon-fish-doom-slanted-color-preview.ansi`，其 SHA-256 必须为 `b95e5598fffcac61a4a10bbf185fe602068e4b7ed6e8de3caf0cb9308060a28e`；若文件缺失或哈希不符，停止并要求恢复批准产物，不得凭近似预览重建。
-- xterm-256 负载必须由同一 RGB 单元映射到 xterm 16–255 调色板，SHA-256 必须为 `3dcd1dec206d85cfc5855d74f16df3be3f4877528befcd469ebc5e50d111cf88`。
-- 两个颜色负载剥离 ANSI 后必须完全一致，纯文本 SHA-256 必须为 `4827bd4b6fbdb09ea318d017d7c7c58ba786ef5faf48dfcd3de0943070e335c6`。
-- 可见结构固定为 6 行标题、1 行空行、24 行柠檬；最大宽度 71 列；柠檬每行由 4 个缩进空格和 64 列负载组成。
-- 真彩标题 ANSI、标题纯文本、柠檬 ANSI、柠檬纯文本 SHA-256 分别为 `ce4807ba3b2f2c0445cce339b5683df975b1eca12154ac230e94e30c774437b2`、`758a85557c85abb981dffa7763223ed926e5d2faf6f8200d47112c28e15c2acd`、`a768dcc6b1a9ff91d053ff48c4e8eb1c97ed287bde924803512b7f1f7cf31247`、`fc917acdb5302983b470eb4d8cd3e83e68e2c6f3da246b2ad3e89bc14d2c0ae2`。
+- 唯一运行时文件是 `functions/fish_greeting.fish`；不得修改 `config.fish`、`conf.d/`、提示符或通用颜色变量。
+- 真彩批准负载必须来自 `/tmp/oh-lemon-fish-doom-slanted-color-preview-64x20.ansi`，其 SHA-256 必须为 `2e244f260807929ff832145ed36d2262d670ca78b9940bf88c1d533e8b554b53`；若文件缺失或哈希不符，停止并要求恢复批准产物，不得凭近似预览重建。
+- xterm-256 负载必须由同一 RGB 单元映射到 xterm 16–255 调色板，SHA-256 必须为 `c3cc4c65c18c0e7e8a2a2f70566074ca66a7f412241badc3e9a8aba9cace68ca`。
+- 两个颜色负载剥离 ANSI 后必须完全一致，纯文本 SHA-256 必须为 `727e5386d9a04a74376ee9d3fa57f849d80b823429bd9c3d5e1fc3c15942d975`。
+- 可见结构固定为 6 行标题、1 行空行、20 行柠檬；最大宽度 71 列；柠檬每行由 4 个缩进空格和 64 列负载组成。
+- 真彩标题 ANSI、标题纯文本、柠檬 ANSI、柠檬纯文本 SHA-256 分别为 `ce4807ba3b2f2c0445cce339b5683df975b1eca12154ac230e94e30c774437b2`、`758a85557c85abb981dffa7763223ed926e5d2faf6f8200d47112c28e15c2acd`、`548cda3b81ed28b0e309fb10c5040a317b645581cd3b86116b7dbe1bd817b989`、`baa279ead94a62b694a474e64ee3b16457a4a6b3445ad3cd74a4b7c1393363b1`。
 - 非交互式 Fish、非 TTY 和 `TERM=dumb` 必须安静成功返回；任何可见输出路径都必须以单个、不换行的 `ESC[0m` 安全重置结束。
 - 运行时只使用 Fish 内建命令及内嵌函数 `isatty`；不得调用 `cat`、Python、ImageMagick、Chafa、FIGlet、PyFiglet、`ascii-image-converter` 或其他外部进程。
 - 同一 Fish 进程内连续调用 20 次的中位耗时必须不超过 50 ms。
 
 ## File Structure
 
-- Create `functions/fish_greeting.fish`: 唯一运行时单元，负责守卫、颜色能力选择、静态负载和最终重置。
-- Create `tests/fish_greeting_test.sh`: 开发期字节级验收脚本，负责 PTY 捕获、哈希、布局、字符集、颜色分支和静默守卫验证。仓库当前没有测试框架；新增这一份依赖系统现有工具的脚本，是验证 ANSI 二进制输出而不为运行时引入抽象或依赖的最小方案。
+- Modify `functions/fish_greeting.fish`: 唯一运行时单元，负责守卫、颜色能力选择、静态负载和最终重置。
+- Modify `tests/fish_greeting_test.sh`: 开发期字节级验收脚本，负责 PTY 捕获、哈希、布局、字符集、颜色分支和静默守卫验证。
 - Temporary `/tmp/build_fish_greeting.py`: 不提交；把已批准真彩负载转换成 Fish 安全静态字面量并生成 256 色副本。
 
 ---
 
-### Task 1: 实现并自动验收静态欢迎画面
+### Task 1: 更新并自动验收静态欢迎画面
 
 **Files:**
-- Create: `functions/fish_greeting.fish`
-- Create: `tests/fish_greeting_test.sh`
+- Modify: `functions/fish_greeting.fish`
+- Modify: `tests/fish_greeting_test.sh`
 - Reference: `docs/superpowers/specs/2026-07-14-oh-lemon-fish-greeting-design.md`
 - Temporary: `/tmp/build_fish_greeting.py`
 
 **Interfaces:**
-- Consumes: 已批准的 `/tmp/oh-lemon-fish-doom-slanted-color-preview.ansi` 真彩负载及规格中的固定哈希。
+- Consumes: 已批准的 `/tmp/oh-lemon-fish-doom-slanted-color-preview-64x20.ansi` 真彩负载及规格中的固定哈希。
 - Produces: `fish_greeting`（无参数；仅在交互式 TTY 且 `TERM != dumb` 时向标准输出写入负载）；`bash tests/fish_greeting_test.sh`（成功返回 0，失败返回非 0 并输出精确原因）。
 
 - [ ] **Step 1: 验证实现前置条件**
@@ -46,10 +46,10 @@
 Run:
 
 ```bash
-test -f /tmp/oh-lemon-fish-doom-slanted-color-preview.ansi
-test "$(sha256sum /tmp/oh-lemon-fish-doom-slanted-color-preview.ansi | awk '{print $1}')" = \
-  b95e5598fffcac61a4a10bbf185fe602068e4b7ed6e8de3caf0cb9308060a28e
-test ! -e functions/fish_greeting.fish
+test -f /tmp/oh-lemon-fish-doom-slanted-color-preview-64x20.ansi
+test "$(sha256sum /tmp/oh-lemon-fish-doom-slanted-color-preview-64x20.ansi | awk '{print $1}')" = \
+  2e244f260807929ff832145ed36d2262d670ca78b9940bf88c1d533e8b554b53
+test -f functions/fish_greeting.fish
 fish --version
 script --version | sed -n '1p'
 ```
@@ -58,7 +58,7 @@ Expected: 三个 `test` 均返回 0；版本输出包含 `fish, version 4.6.0` �
 
 - [ ] **Step 2: 写入失败优先的字节级验收脚本**
 
-Create `tests/fish_greeting_test.sh` with this complete content:
+Update `tests/fish_greeting_test.sh` to this complete content:
 
 ```bash
 #!/usr/bin/env bash
@@ -66,13 +66,13 @@ set -euo pipefail
 
 readonly ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly FUNCTION_FILE="$ROOT_DIR/functions/fish_greeting.fish"
-readonly TRUECOLOR_SHA256="b95e5598fffcac61a4a10bbf185fe602068e4b7ed6e8de3caf0cb9308060a28e"
-readonly XTERM256_SHA256="3dcd1dec206d85cfc5855d74f16df3be3f4877528befcd469ebc5e50d111cf88"
-readonly PLAIN_SHA256="4827bd4b6fbdb09ea318d017d7c7c58ba786ef5faf48dfcd3de0943070e335c6"
+readonly TRUECOLOR_SHA256="2e244f260807929ff832145ed36d2262d670ca78b9940bf88c1d533e8b554b53"
+readonly XTERM256_SHA256="c3cc4c65c18c0e7e8a2a2f70566074ca66a7f412241badc3e9a8aba9cace68ca"
+readonly PLAIN_SHA256="727e5386d9a04a74376ee9d3fa57f849d80b823429bd9c3d5e1fc3c15942d975"
 readonly TITLE_TRUECOLOR_SHA256="ce4807ba3b2f2c0445cce339b5683df975b1eca12154ac230e94e30c774437b2"
 readonly TITLE_PLAIN_SHA256="758a85557c85abb981dffa7763223ed926e5d2faf6f8200d47112c28e15c2acd"
-readonly LEMON_TRUECOLOR_SHA256="a768dcc6b1a9ff91d053ff48c4e8eb1c97ed287bde924803512b7f1f7cf31247"
-readonly LEMON_PLAIN_SHA256="fc917acdb5302983b470eb4d8cd3e83e68e2c6f3da246b2ad3e89bc14d2c0ae2"
+readonly LEMON_TRUECOLOR_SHA256="548cda3b81ed28b0e309fb10c5040a317b645581cd3b86116b7dbe1bd817b989"
+readonly LEMON_PLAIN_SHA256="baa279ead94a62b694a474e64ee3b16457a4a6b3445ad3cd74a4b7c1393363b1"
 readonly FISH_COMMAND='source "$GREETING_FUNCTION"; fish_greeting'
 
 fail() {
@@ -183,8 +183,8 @@ cmp -s "$TMP_DIR/truecolor.txt" "$TMP_DIR/xterm256.txt" || fail "color modes cha
 
 head -n 6 "$TMP_DIR/truecolor.payload" > "$TMP_DIR/title.ansi"
 head -n 6 "$TMP_DIR/truecolor.txt" > "$TMP_DIR/title.txt"
-sed -n '8,31p' "$TMP_DIR/truecolor.payload" | cut -c 5- > "$TMP_DIR/lemon.ansi"
-sed -n '8,31p' "$TMP_DIR/truecolor.txt" | cut -c 5- > "$TMP_DIR/lemon.txt"
+sed -n '8,27p' "$TMP_DIR/truecolor.payload" | cut -c 5- > "$TMP_DIR/lemon.ansi"
+sed -n '8,27p' "$TMP_DIR/truecolor.txt" | cut -c 5- > "$TMP_DIR/lemon.txt"
 assert_hash "$TITLE_TRUECOLOR_SHA256" "$TMP_DIR/title.ansi" "title ANSI"
 assert_hash "$TITLE_PLAIN_SHA256" "$TMP_DIR/title.txt" "title plain text"
 assert_hash "$LEMON_TRUECOLOR_SHA256" "$TMP_DIR/lemon.ansi" "lemon ANSI"
@@ -193,9 +193,9 @@ assert_hash "$LEMON_PLAIN_SHA256" "$TMP_DIR/lemon.txt" "lemon plain text"
 awk '
     NR <= 6 && length($0) > 71 { exit 1 }
     NR == 7 && length($0) != 0 { exit 1 }
-    NR >= 8 && NR <= 31 && (length($0) != 68 || substr($0, 1, 4) != "    ") { exit 1 }
-    END { if (NR != 31) exit 1 }
-' "$TMP_DIR/truecolor.txt" || fail "plain-text layout is not 6 + 1 + 24 lines within 71 columns"
+    NR >= 8 && NR <= 27 && (length($0) != 68 || substr($0, 1, 4) != "    ") { exit 1 }
+    END { if (NR != 27) exit 1 }
+' "$TMP_DIR/truecolor.txt" || fail "plain-text layout is not 6 + 1 + 20 lines within 71 columns"
 
 if LC_ALL=C grep -n '[^ .=+#@-]' "$TMP_DIR/lemon.txt"; then
     fail "lemon contains a character outside space and .-=+#@"
@@ -216,7 +216,7 @@ Make it executable:
 chmod +x tests/fish_greeting_test.sh
 ```
 
-- [ ] **Step 3: 运行验收脚本并确认它因实现缺失而失败**
+- [ ] **Step 3: 运行验收脚本并确认旧负载不满足新合同**
 
 Run:
 
@@ -224,7 +224,7 @@ Run:
 bash tests/fish_greeting_test.sh
 ```
 
-Expected: FAIL with `FAIL: missing .../functions/fish_greeting.fish` and a non-zero exit status.
+Expected: FAIL with the new truecolor payload hash as `expected` and the old 64×24 payload hash as `got`, with a non-zero exit status.
 
 - [ ] **Step 4: 写入开发期临时生成器**
 
@@ -240,9 +240,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-TRUECOLOR_SHA256 = "b95e5598fffcac61a4a10bbf185fe602068e4b7ed6e8de3caf0cb9308060a28e"
-XTERM256_SHA256 = "3dcd1dec206d85cfc5855d74f16df3be3f4877528befcd469ebc5e50d111cf88"
-PLAIN_SHA256 = "4827bd4b6fbdb09ea318d017d7c7c58ba786ef5faf48dfcd3de0943070e335c6"
+TRUECOLOR_SHA256 = "2e244f260807929ff832145ed36d2262d670ca78b9940bf88c1d533e8b554b53"
+XTERM256_SHA256 = "c3cc4c65c18c0e7e8a2a2f70566074ca66a7f412241badc3e9a8aba9cace68ca"
+PLAIN_SHA256 = "727e5386d9a04a74376ee9d3fa57f849d80b823429bd9c3d5e1fc3c15942d975"
 SGR = re.compile(rb"\x1b\[[0-9;]*m")
 
 
@@ -356,14 +356,14 @@ Run:
 
 ```bash
 python3 /tmp/build_fish_greeting.py \
-  /tmp/oh-lemon-fish-doom-slanted-color-preview.ansi \
+  /tmp/oh-lemon-fish-doom-slanted-color-preview-64x20.ansi \
   functions/fish_greeting.fish
 fish -n functions/fish_greeting.fish
-test "$(wc -c < functions/fish_greeting.fish)" -eq 58739
+test "$(wc -c < functions/fish_greeting.fish)" -eq 51457
 rm /tmp/build_fish_greeting.py
 ```
 
-Expected: generator and `fish -n` return 0; generated source is exactly 58,739 bytes on Fish 4.6.0; the temporary generator is removed.
+Expected: generator and `fish -n` return 0; generated source is exactly 51,457 bytes on Fish 4.6.0; the temporary generator is removed.
 
 - [ ] **Step 6: 运行完整自动验收**
 
@@ -393,16 +393,18 @@ git diff --check
 git status --short
 ```
 
-Expected: syntax and dependency audit return 0; `git diff --check` is silent; status lists only `functions/fish_greeting.fish` and `tests/fish_greeting_test.sh`.
+Expected: syntax and dependency audit return 0; `git diff --check` is silent; status lists the runtime function, acceptance script, design spec, and implementation plan.
 
-- [ ] **Step 8: 提交功能和验收脚本**
+- [ ] **Step 8: 提交 64×20 定稿修改**
 
 ```bash
-git add functions/fish_greeting.fish tests/fish_greeting_test.sh
-git commit -m "feat: add oh-lemon-fish startup greeting"
+git add functions/fish_greeting.fish tests/fish_greeting_test.sh \
+  docs/superpowers/specs/2026-07-14-oh-lemon-fish-greeting-design.md \
+  docs/superpowers/plans/2026-07-15-oh-lemon-fish-greeting.md
+git commit -m "feat: flatten oh-lemon-fish greeting"
 ```
 
-Expected: one commit containing exactly the runtime function and its acceptance script.
+Expected: one commit containing exactly the runtime function, acceptance script, design spec, and implementation plan.
 
 ### Task 2: 执行真实终端与性能验收
 
@@ -434,7 +436,7 @@ env TERM=xterm-256color COLORTERM=truecolor \
   'source functions/fish_greeting.fish; fish_greeting'
 ```
 
-Expected: 6 行 Doom 轻度右倾彩虹标题、1 行空行和 24 行居中柠檬；`oh-lemon-fish` 易读，整果、切面和叶子可辨认，命令结束后终端颜色恢复正常。
+Expected: 6 行 Doom 轻度右倾彩虹标题、1 行空行和 20 行居中柠檬；`oh-lemon-fish` 易读，整果、切面和叶子可辨认，命令结束后终端颜色恢复正常。
 
 - [ ] **Step 3: 在 xterm-256 PTY 中人工核对降级画面**
 
@@ -511,4 +513,4 @@ git status --short
 git log -5 --oneline --decorate
 ```
 
-Expected: status is empty; the feature and implementation-plan commits are present above the approved design commits. This task is verification-only and creates no additional commit.
+Expected: status is empty; the 64×20 finalization commit is at `HEAD` above the original feature and design commits. This task is verification-only and creates no additional commit.
