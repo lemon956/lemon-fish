@@ -79,6 +79,70 @@ printf '%s\n' \
 assert_file_equals "$TMP_DIR/valid.expected" "$valid_capture" \
     "workspace roots were not passed to Zed correctly"
 
+directory_root="$TMP_DIR/directory root"
+mkdir -p "$directory_root"
+
+directory_capture="$TMP_DIR/directory.capture"
+invoke_zed \
+    "$directory_capture" \
+    'zed "$TEST_DIRECTORY"' \
+    "TEST_DIRECTORY=$directory_root"
+printf '%s\n' '-n' "$directory_root" > "$TMP_DIR/directory.expected"
+assert_file_equals "$TMP_DIR/directory.expected" "$directory_capture" \
+    "directory was not opened in a new Zed window"
+
+wait_directory_capture="$TMP_DIR/wait-directory.capture"
+invoke_zed \
+    "$wait_directory_capture" \
+    'zed --wait "$TEST_DIRECTORY"' \
+    "TEST_DIRECTORY=$directory_root"
+printf '%s\n' '-n' '--wait' "$directory_root" \
+    > "$TMP_DIR/wait-directory.expected"
+assert_file_equals "$TMP_DIR/wait-directory.expected" "$wait_directory_capture" \
+    "directory with options was not opened in a new Zed window"
+
+existing_directory_capture="$TMP_DIR/existing-directory.capture"
+invoke_zed \
+    "$existing_directory_capture" \
+    'zed --existing "$TEST_DIRECTORY"' \
+    "TEST_DIRECTORY=$directory_root"
+printf '%s\n' '--existing' "$directory_root" \
+    > "$TMP_DIR/existing-directory.expected"
+assert_file_equals \
+    "$TMP_DIR/existing-directory.expected" \
+    "$existing_directory_capture" \
+    "explicit existing-window behavior was not preserved"
+
+add_directory_capture="$TMP_DIR/add-directory.capture"
+invoke_zed \
+    "$add_directory_capture" \
+    'zed --add "$TEST_DIRECTORY"' \
+    "TEST_DIRECTORY=$directory_root"
+printf '%s\n' '--add' "$directory_root" > "$TMP_DIR/add-directory.expected"
+assert_file_equals "$TMP_DIR/add-directory.expected" "$add_directory_capture" \
+    "explicit add-to-window behavior was not preserved"
+
+explicit_new_capture="$TMP_DIR/explicit-new.capture"
+invoke_zed \
+    "$explicit_new_capture" \
+    'zed -n "$TEST_DIRECTORY"' \
+    "TEST_DIRECTORY=$directory_root"
+printf '%s\n' '-n' "$directory_root" > "$TMP_DIR/explicit-new.expected"
+assert_file_equals "$TMP_DIR/explicit-new.expected" "$explicit_new_capture" \
+    "explicit new-window behavior was duplicated or changed"
+
+user_data_dir="$TMP_DIR/user data"
+mkdir -p "$user_data_dir"
+user_data_capture="$TMP_DIR/user-data.capture"
+invoke_zed \
+    "$user_data_capture" \
+    'zed --user-data-dir "$TEST_USER_DATA_DIR" --version' \
+    "TEST_USER_DATA_DIR=$user_data_dir"
+printf '%s\n' '--user-data-dir' "$user_data_dir" '--version' \
+    > "$TMP_DIR/user-data.expected"
+assert_file_equals "$TMP_DIR/user-data.expected" "$user_data_capture" \
+    "directory-valued option was mistaken for a project path"
+
 missing_workspace="$TMP_DIR/missing.code-workspace"
 if invoke_zed \
     "$TMP_DIR/missing.capture" \
@@ -146,4 +210,4 @@ else
 fi
 [[ $status -eq 23 ]] || fail "expected Zed exit status 23, got $status"
 
-printf 'PASS: zed workspace parsing, errors, passthrough, and exit status\n'
+printf 'PASS: zed new-window behavior, workspace parsing, passthrough, and errors\n'
