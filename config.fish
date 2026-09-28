@@ -36,3 +36,7 @@ fish_add_path ~/.npm-global/bin
 
 # 设置默认编辑器
 if type -q nvim; set -gx EDITOR nvim; end
+
+
+# Added by Antigravity CLI installer
+set -gx PATH "/home/lemon/.local/bin" $PATH
